@@ -10,7 +10,7 @@
 #   install-from-index.sh --list
 set -Eeuo pipefail
 
-INDEX_URL="${DOWNLOAD_INDEX_URL:-https://v8wzge.github.io/fedora-pkgbuild/downloads/index.json}"
+INDEX_URL="${DOWNLOAD_INDEX_URL:-https://raw.githubusercontent.com/v8wzge/fedora-pkgbuild/gh-pages/downloads/index.json}"
 CACHE="${XDG_CACHE_HOME:-$HOME/.cache}/v8wzge-download-index.json"
 
 command -v curl >/dev/null || { echo "curl is required" >&2; exit 1; }

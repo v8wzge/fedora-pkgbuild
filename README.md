@@ -12,7 +12,7 @@
 
 ## 国产软件官方下载地址索引
 
-对微信、QQ、WPS 这类**只从官方渠道分发、不适合二次打包**的软件，本仓库另外维护一份"官方下载地址索引"。工作流每 3 天探测各厂商官方页面/配置，把最新版本与官方 RPM 直链写入索引并发布到 `https://v8wzge.github.io/fedora-pkgbuild/downloads/index.json`。**索引只记录地址，RPM 本身由客户机直接从厂商 CDN 拉取**，本仓库不托管这些安装包。微信为固定直链；QQ 和 WPS 的 CDN 需要有时效的签名，客户端脚本会在下载时实时生成签名（QQ 调用官方 UrlSign 接口，WPS 用页面公开的 MD5 规则），索引里只存稳定的未签名地址和签名方式，不存会过期的签名。
+对微信、QQ、WPS 这类**只从官方渠道分发、不适合二次打包**的软件，本仓库另外维护一份"官方下载地址索引"。工作流每 3 天探测各厂商官方页面/配置，把最新版本与官方 RPM 直链写入索引并发布到 gh-pages 的 `downloads/index.json`（可用 `https://raw.githubusercontent.com/v8wzge/fedora-pkgbuild/gh-pages/downloads/index.json` 无缓存读取；Pages 地址有 CDN 缓存延迟）。**索引只记录地址，RPM 本身由客户机直接从厂商 CDN 拉取**，本仓库不托管这些安装包。微信为固定直链；QQ 和 WPS 的 CDN 需要有时效的签名，客户端脚本会在下载时实时生成签名（QQ 调用官方 UrlSign 接口，WPS 用页面公开的 MD5 规则），索引里只存稳定的未签名地址和签名方式，不存会过期的签名。
 
 客户端脚本位于 `scripts/download-index/install-from-index.sh`：
 
