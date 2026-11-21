@@ -11,6 +11,11 @@ on:
         type: boolean
         default: false
 
+# All packages share one repository branch; serialize publishes.
+concurrency:
+  group: rpm-build
+  cancel-in-progress: false
+
 permissions:
   contents: write
 

@@ -44,5 +44,14 @@ git -C "$REPO" \
     -c user.email="bot@users.noreply.github.com" \
     commit -q -m "Update $PACKAGE RPM"
 
-git -C "$REPO" push --quiet
+# Guard against another workflow having published while this build was running.
+git -C "$REPO" fetch --quiet origin gh-pages
+if ! git -C "$REPO" merge-base --is-ancestor origin/gh-pages HEAD; then
+    git -C "$REPO" pull --rebase --quiet origin gh-pages || {
+        echo "ERROR: gh-pages changed concurrently; publish aborted" >&2
+        exit 1
+    }
+fi
+
+git -C "$REPO" push --quiet origin HEAD:gh-pages
 echo "Published $PACKAGE to the RPM repository"
