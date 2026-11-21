@@ -21,7 +21,8 @@ packages = []
 for arch, fmt, url in urls:
     marker = url.rsplit("/", 1)[-1]
     if marker in html:
-        packages.append({"arch": arch, "format": fmt, "url": url})
+        # WeChat's CDN serves the fixed URL directly, no signing required.
+        packages.append({"arch": arch, "format": fmt, "url": url, "sign": "none"})
 
 if not packages:
     fail("no official RPM links found on WeChat page")

@@ -37,7 +37,15 @@ packages = []
 for arch, key in (("x86_64", "x64DownloadUrl"), ("aarch64", "armDownloadUrl")):
     entry = linux.get(key)
     if isinstance(entry, dict) and entry.get("rpm"):
-        packages.append({"arch": arch, "format": "rpm", "url": entry["rpm"]})
+        # The official CDN requires a fresh signature obtained at download
+        # time via the noauth UrlSign RPC on im.qq.com. Record the recipe,
+        # never a signed URL (those expire).
+        packages.append({
+            "arch": arch,
+            "format": "rpm",
+            "url": entry["rpm"],
+            "sign": "qq-urlsign",
+        })
 
 if not packages:
     fail("no official RPM links found in QQ config")
