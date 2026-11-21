@@ -69,27 +69,28 @@ install -d %{buildroot}%{_docdir}/%{name}
 install -pm644 AUTHORS ChangeLog %{buildroot}%{_docdir}/%{name}/
 
 %files -f %{name}.lang
-%license %{_licensedir}/%{name}/COPYING %{_licensedir}/%{name}/COPYING.OpenSSL
-%doc %{_docdir}/%{name}/AUTHORS %{_docdir}/%{name}/ChangeLog
-%{_bindir}/kdesvn*
-%{_libdir}/qt6/plugins/kdesvn*
-%{_libdir}/qt6/plugins/kio_ksvn*
-%{_libdir}/qt6/plugins/*/kdesvn*
-%{_libdir}/qt6/plugins/*/kio_ksvn*
-%{_libdir}/qt6/plugins/*/*/kdesvn*
-%{_libdir}/qt6/plugins/*/*/kio_ksvn*
+%license %{_licensedir}/%{name}/COPYING
+%license %{_licensedir}/%{name}/COPYING.OpenSSL
+%doc %{_docdir}/%{name}/AUTHORS
+%doc %{_docdir}/%{name}/ChangeLog
+%{_bindir}/kdesvn
+%{_bindir}/kdesvnaskpass
+%{_libdir}/qt6/plugins/kf6/kded/kdesvnd.so
+%{_libdir}/qt6/plugins/kf6/kfileitemaction/ksvn_fileitemactions.so
+%{_libdir}/qt6/plugins/kf6/kio/kio_ksvn.so
+%{_libdir}/qt6/plugins/kf6/parts/kdesvnpart.so
 %{_datadir}/applications/org.kde.kdesvn.desktop
-%{_datadir}/metainfo/org.kde.kdesvn.appdata.xml
-%{_datadir}/dbus-1/interfaces/*kdesvnd*
-%{_datadir}/dbus-1/services/*kdesvnd*
-%{_datadir}/kcfg/*kdesvn*
-%{_datadir}/kconf_update/*kdesvn*
-%{_datadir}/kdesvn/
-%{_datadir}/kxmlgui*/kdesvn/
+%{_datadir}/config.kcfg/kdesvn_part.kcfg
+%{_datadir}/dbus-1/interfaces/kf6_org.kde.kdesvnd.xml
+%{_datadir}/dbus-1/services/org.kde.kdesvnd.service
+%{_datadir}/doc/HTML/*/kdesvn/
 %{_datadir}/icons/hicolor/*/actions/kdesvn*
 %{_datadir}/icons/hicolor/*/apps/kdesvn*
 %{_datadir}/icons/hicolor/*/places/kdesvn*
-%{_datadir}/doc/HTML/en/kdesvn/
+%{_datadir}/kdesvn/
+%{_mandir}/man1/kdesvn*
+%{_mandir}/*/man1/kdesvn*
+%{_datadir}/metainfo/org.kde.kdesvn.appdata.xml
 
 %changelog
 * Sat Nov 21 2026 v8wzge <v8wzge@users.noreply.github.com> - 2.1.0-0.1

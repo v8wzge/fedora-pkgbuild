@@ -50,29 +50,36 @@ components only.
 
 %install
 %cmake_install
-%find_lang %{name}
 install -d %{buildroot}%{_licensedir}/%{name}
 cp -a LICENSES/. %{buildroot}%{_licensedir}/%{name}/
 install -d %{buildroot}%{_docdir}/%{name}
 install -pm644 README.md AUTHORS %{buildroot}%{_docdir}/%{name}/
 
-%files -f %{name}.lang
+%files
 %license %{_licensedir}/%{name}/
-%doc %{_docdir}/%{name}/README.md %{_docdir}/%{name}/AUTHORS
+%doc %{_docdir}/%{name}/README.md
+%doc %{_docdir}/%{name}/AUTHORS
 %{_bindir}/klassy-settings
 %{_libdir}/cmake/Klassy/
-%{_libdir}/libklassycommon*.so
-%{_libdir}/qt6/plugins/styles/klassy*.so
-%{_libdir}/qt6/plugins/kf6/kdecoration/klassydecoration.so
+%{_libdir}/libklassycommon*.so*
+%{_libdir}/qt6/plugins/kstyle_config/klassystyleconfig.so
+%{_libdir}/qt6/plugins/org.kde.kdecoration3.kcm/kcm_klassydecoration.so
 %{_libdir}/qt6/plugins/org.kde.kdecoration3.kcm/klassydecoration/
+%{_libdir}/qt6/plugins/org.kde.kdecoration3/org.kde.klassy.so
+%{_libdir}/qt6/plugins/styles/klassy6.so
+%{_datadir}/applications/kcm_klassydecoration.desktop
 %{_datadir}/applications/klassy-settings.desktop
+%{_datadir}/applications/klassystyleconfig.desktop
 %{_datadir}/color-schemes/*.colors
-%{_datadir}/icons/klassy*/
-%{_datadir}/kcfg/*klassy*
+%{_datadir}/config.kcfg/klassy*.kcfg
+%{_datadir}/icons/hicolor/scalable/apps/klassy-settings.svgz
+%{_datadir}/icons/klassy/
+%{_datadir}/icons/klassy-dark/
 %{_datadir}/kstyle/themes/klassy.themerc
-%{_datadir}/plasma/layout-templates/*
-%{_datadir}/plasma/look-and-feel/*
-%{_datadir}/themes/klassy*/
+%{_datadir}/locale/*/LC_MESSAGES/klassy_*.mo
+%{_datadir}/plasma/desktoptheme/klassy*/
+%{_datadir}/plasma/layout-templates/
+%{_datadir}/plasma/look-and-feel/
 
 %changelog
 * Sat Nov 21 2026 v8wzge <v8wzge@users.noreply.github.com> - 6.7.4-0.1
