@@ -44,10 +44,12 @@ curl -fsSL https://raw.githubusercontent.com/v8wzge/fedora-pkgbuild/main/scripts
 ```bash
 sudo curl -o /etc/yum.repos.d/v8wzge-vendor.repo \
   https://raw.githubusercontent.com/v8wzge/fedora-pkgbuild/main/repo/v8wzge-vendor.repo
-sudo dnf install wechat qq wps-office
+sudo dnf install wechat linuxqq wps-office
 # 查看源里有哪些版本
 dnf --repoid=v8wzge-vendor list --available
 ```
+
+> 包名以 RPM 自身的 NEVRA 为准：QQ 的包名是 `linuxqq`（不是 `qq`），微信是 `wechat`，WPS 是 `wps-office`。`dnf search qq` 可以找到它。
 
 - 大文件（RPM）托管在 Release，仅 repodata（几百 KB）进 gh-pages，git 仓库不会膨胀。
 - 资源文件名固定为 `<包>-<版本>-<架构>.rpm`，因此下载 URL 稳定；厂商发新版时旧资源会被删除，Release 只保留当前版本。

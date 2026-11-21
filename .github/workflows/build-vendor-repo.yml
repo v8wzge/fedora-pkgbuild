@@ -2,8 +2,8 @@ name: Build vendor dnf repository
 
 # Mirrors official vendor RPMs (WeChat / QQ / WPS) into a GitHub Release and
 # publishes repodata whose location href points at those Release assets.
-# Result: `dnf install wechat qq wps-office` works with no client-side signing
-# and without storing 300-600 MB binaries in the gh-pages git branch.
+# Result: `dnf install wechat linuxqq wps-office` works with no client-side
+# signing and without storing 300-600 MB binaries in the gh-pages git branch.
 
 on:
   schedule:
