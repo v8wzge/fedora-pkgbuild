@@ -98,8 +98,11 @@ def main():
                 continue
             package = item["package"]
             version = item["version"]
-            filename = f"{safe_component(package)}-{safe_component(version)}-{safe_component(arch)}.rpm"
-            target = staging / filename
+            # Stage under the probe-based name first; after download we rename
+            # to the RPM's own NEVRA (see below) so the asset filename reflects
+            # the real package, not a possibly-drifted probe version string.
+            probe_filename = f"{safe_component(package)}-{safe_component(version)}-{safe_component(arch)}.rpm"
+            target = staging / probe_filename
             try:
                 signed = sign(artifact["url"], artifact.get("sign", "none"), artifact.get("sign_key", ""))
                 print(f"Downloading {package} {version} ({arch}) ...", flush=True)
@@ -107,6 +110,16 @@ def main():
                 if not verify_rpm(target):
                     raise RuntimeError("downloaded file is not an RPM (bad magic)")
                 nevra = query_nevra(target)
+                if nevra:
+                    canonical = (
+                        f"{safe_component(nevra['name'])}-{safe_component(nevra['version'])}-"
+                        f"{safe_component(nevra['release'])}-{safe_component(nevra['arch'])}.rpm"
+                    )
+                    if canonical != probe_filename:
+                        print(f"  NEVRA filename {canonical} (probe said {probe_filename})")
+                        target.rename(target.with_name(canonical))
+                        target = target.with_name(canonical)
+                filename = target.name
                 entries.append({
                     "package": package,
                     "name": item.get("name", package),
