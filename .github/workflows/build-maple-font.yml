@@ -1,0 +1,26 @@
+name: Build MapleMono font RPM
+
+on:
+  schedule:
+    # Every three days at 02:37 UTC.
+    - cron: "37 2 */3 * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Rebuild even if the release is unchanged
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    uses: ./.github/workflows/_build-release.yml
+    with:
+      package: maple-font
+      release_repo: subframe7536/maple-font
+      asset_name: MapleMono-NF-unhinted.zip
+      spec: specs/maple-font.spec
+      include_prereleases: true
+      force: ${{ inputs.force || false }}

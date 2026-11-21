@@ -1,0 +1,154 @@
+name: Reusable - GitHub release RPM
+
+on:
+  workflow_call:
+    inputs:
+      package:
+        description: Package name (used as the state key)
+        required: true
+        type: string
+      release_repo:
+        description: GitHub repository that publishes the release, e.g. owner/repo
+        required: true
+        type: string
+      asset_name:
+        description: Exact release asset filename to package
+        required: true
+        type: string
+      spec:
+        description: Spec file in this repository
+        required: true
+        type: string
+      include_prereleases:
+        description: Consider beta / rc releases as well
+        required: false
+        type: boolean
+        default: true
+      force:
+        description: Rebuild even when the release is unchanged
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rpm-${{ inputs.package }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build ${{ inputs.package }}
+    runs-on: ubuntu-latest
+    container:
+      image: fedora:45
+      options: --user root
+    steps:
+      - name: Install build tools
+        run: dnf -y install python3 rpm-build rpmdevtools createrepo_c curl
+
+      - name: Checkout packaging repository
+        uses: actions/checkout@v4
+        with:
+          path: source
+
+      - name: Checkout RPM repository branch
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: rpmrepo
+          token: ${{ github.token }}
+
+      - name: Compare newest release with last build
+        id: decide
+        working-directory: source
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          PKG: ${{ inputs.package }}
+          RELEASE_REPO: ${{ inputs.release_repo }}
+          ASSET_NAME: ${{ inputs.asset_name }}
+          INCLUDE_PRE: ${{ inputs.include_prereleases }}
+          FORCE: ${{ inputs.force }}
+        run: |
+          set -euo pipefail
+          IFS=$'\t' read -r TAG VERSION URL ASSET_ID UPDATED < <(
+            python3 scripts/find_release.py "$RELEASE_REPO" "$ASSET_NAME" "$INCLUDE_PRE"
+          )
+          STATE="../rpmrepo/state/$PKG.json"
+          LAST=""
+          if [[ -f "$STATE" ]]; then
+            LAST=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("fingerprint",""))' "$STATE")
+          fi
+          FINGERPRINT="$TAG:$ASSET_ID:$UPDATED"
+          {
+            echo "tag=$TAG"
+            echo "version=$VERSION"
+            echo "url=$URL"
+            echo "fingerprint=$FINGERPRINT"
+          } >> "$GITHUB_OUTPUT"
+          if [[ "$FORCE" == "true" || "$FINGERPRINT" != "$LAST" ]]; then
+            echo "New release $TAG ($ASSET_ID), building"
+            echo "built=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Release $TAG already packaged; skipping"
+            echo "built=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download release asset
+        if: steps.decide.outputs.built == 'true'
+        working-directory: source
+        env:
+          RELEASE_REPO: ${{ inputs.release_repo }}
+          ASSET_NAME: ${{ inputs.asset_name }}
+          INCLUDE_PRE: ${{ inputs.include_prereleases }}
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p ../work/sources ../work/spec ../work/out
+          bash scripts/prepare-release-source.sh \
+            "$RELEASE_REPO" "$ASSET_NAME" "$ASSET_NAME" ../work/sources "$INCLUDE_PRE"
+
+      - name: Render spec and build RPM
+        if: steps.decide.outputs.built == 'true'
+        working-directory: source
+        env:
+          SPEC: ${{ inputs.spec }}
+          VERSION: ${{ steps.decide.outputs.version }}
+        run: |
+          set -euo pipefail
+          python3 scripts/render_spec.py \
+            --spec "$SPEC" \
+            --out "../work/spec/$(basename "$SPEC")" \
+            --version "$VERSION"
+          bash scripts/build-rpm.sh \
+            "../work/spec/$(basename "$SPEC")" \
+            ../work/sources \
+            ../work/out
+
+      - name: Publish to RPM repository
+        if: steps.decide.outputs.built == 'true'
+        working-directory: source
+        env:
+          PKG: ${{ inputs.package }}
+          TAG: ${{ steps.decide.outputs.tag }}
+          FINGERPRINT: ${{ steps.decide.outputs.fingerprint }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' > ../work/state.json
+          import datetime, json, os
+          print(json.dumps({
+              "tag": os.environ["TAG"],
+              "fingerprint": os.environ["FINGERPRINT"],
+              "built_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+          }, indent=2))
+          PY
+          bash scripts/publish-repo.sh ../rpmrepo ../work/out "$PKG" ../work/state.json
+
+      - name: Upload RPM artifacts
+        if: steps.decide.outputs.built == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: rpm-${{ inputs.package }}
+          path: work/out/*.rpm
+          if-no-files-found: error

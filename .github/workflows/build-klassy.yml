@@ -1,0 +1,26 @@
+name: Build klassy RPM
+
+on:
+  schedule:
+    # Every three days at 02:27 UTC.
+    - cron: "27 2 */3 * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Rebuild even if the upstream commit is unchanged
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    uses: ./.github/workflows/_build-git.yml
+    with:
+      package: klassy
+      git_url: https://github.com/paulmcauley/klassy.git
+      branch: 6.8temp
+      spec: specs/klassy.spec
+      version_script: scripts/versions/klassy.sh
+      force: ${{ inputs.force || false }}

@@ -1,0 +1,164 @@
+name: Reusable - git snapshot RPM
+
+on:
+  workflow_call:
+    inputs:
+      package:
+        description: Package name (used as the state key and tarball prefix)
+        required: true
+        type: string
+      git_url:
+        description: Upstream git URL
+        required: true
+        type: string
+      branch:
+        description: Branch to track
+        required: true
+        type: string
+      spec:
+        description: Spec file in this repository
+        required: true
+        type: string
+      version_script:
+        description: Script that prints the upstream version (run in the checkout)
+        required: true
+        type: string
+      extra_sources:
+        description: Space-separated extra Source files to stage
+        required: false
+        type: string
+        default: ""
+      force:
+        description: Rebuild even when the upstream commit is unchanged
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rpm-${{ inputs.package }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build ${{ inputs.package }}
+    runs-on: ubuntu-latest
+    container:
+      image: fedora:45
+      options: --user root
+    steps:
+      - name: Install build tools
+        run: dnf -y install git python3 rpm-build rpmdevtools createrepo_c tar gzip
+
+      - name: Checkout packaging repository
+        uses: actions/checkout@v4
+        with:
+          path: source
+
+      - name: Checkout RPM repository branch
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: rpmrepo
+          token: ${{ github.token }}
+
+      - name: Compare upstream commit with last build
+        id: decide
+        working-directory: source
+        env:
+          PKG: ${{ inputs.package }}
+          GIT_URL: ${{ inputs.git_url }}
+          BRANCH: ${{ inputs.branch }}
+          FORCE: ${{ inputs.force }}
+        run: |
+          set -euo pipefail
+          COMMIT=$(git ls-remote "$GIT_URL" "refs/heads/$BRANCH" | awk 'NR==1 {print $1}')
+          if [[ -z "$COMMIT" ]]; then
+            echo "::error::branch $BRANCH not found in $GIT_URL"
+            exit 1
+          fi
+          STATE="../rpmrepo/state/$PKG.json"
+          LAST=""
+          if [[ -f "$STATE" ]]; then
+            LAST=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("commit",""))' "$STATE")
+          fi
+          echo "commit=$COMMIT" >> "$GITHUB_OUTPUT"
+          if [[ "$FORCE" == "true" || "$COMMIT" != "$LAST" ]]; then
+            echo "Upstream changed ($LAST -> $COMMIT), building"
+            echo "built=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No new upstream commit for $PKG; skipping"
+            echo "built=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Prepare source tarball and spec
+        if: steps.decide.outputs.built == 'true'
+        working-directory: source
+        env:
+          PKG: ${{ inputs.package }}
+          GIT_URL: ${{ inputs.git_url }}
+          BRANCH: ${{ inputs.branch }}
+          SPEC: ${{ inputs.spec }}
+          VERSION_SCRIPT: ${{ inputs.version_script }}
+          EXTRA_SOURCES: ${{ inputs.extra_sources }}
+        run: |
+          set -euo pipefail
+          mkdir -p ../work/sources ../work/spec ../work/out
+          bash scripts/prepare-git-source.sh \
+            "$GIT_URL" "$BRANCH" "$PKG" \
+            "$GITHUB_WORKSPACE/source/$VERSION_SCRIPT" ../work/sources
+
+          for extra in $EXTRA_SOURCES; do
+            cp -a "$extra" ../work/sources/
+          done
+
+          VERSION=$(cat ../work/sources/.version)
+          COMMIT=$(cat ../work/sources/.commit)
+          DATE=$(cat ../work/sources/.date)
+          python3 scripts/render_spec.py \
+            --spec "$SPEC" \
+            --out "../work/spec/$(basename "$SPEC")" \
+            --version "$VERSION" \
+            --commit "$COMMIT" \
+            --date "$DATE"
+
+      - name: Build RPM
+        if: steps.decide.outputs.built == 'true'
+        working-directory: source
+        env:
+          SPEC: ${{ inputs.spec }}
+        run: |
+          set -euo pipefail
+          bash scripts/build-rpm.sh \
+            "../work/spec/$(basename "$SPEC")" \
+            ../work/sources \
+            ../work/out
+
+      - name: Publish to RPM repository
+        if: steps.decide.outputs.built == 'true'
+        working-directory: source
+        env:
+          PKG: ${{ inputs.package }}
+          COMMIT: ${{ steps.decide.outputs.commit }}
+          BRANCH: ${{ inputs.branch }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' > ../work/state.json
+          import datetime, json, os
+          print(json.dumps({
+              "commit": os.environ["COMMIT"],
+              "branch": os.environ["BRANCH"],
+              "built_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+          }, indent=2))
+          PY
+          bash scripts/publish-repo.sh ../rpmrepo ../work/out "$PKG" ../work/state.json
+
+      - name: Upload RPM artifacts
+        if: steps.decide.outputs.built == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: rpm-${{ inputs.package }}
+          path: work/out/*.rpm
+          if-no-files-found: error

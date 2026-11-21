@@ -1,0 +1,7 @@
+[v8wzge-fedora]
+name=v8wzge Fedora packages
+baseurl=https://v8wzge.github.io/fedora-pkgbuild/
+enabled=1
+gpgcheck=0
+repo_gpgcheck=0
+metadata_expire=6h

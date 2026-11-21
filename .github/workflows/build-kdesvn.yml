@@ -1,0 +1,27 @@
+name: Build kdesvn RPM
+
+on:
+  schedule:
+    # Every three days at 02:17 UTC.
+    - cron: "17 2 */3 * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Rebuild even if the upstream commit is unchanged
+        type: boolean
+        default: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    uses: ./.github/workflows/_build-git.yml
+    with:
+      package: kdesvn
+      git_url: https://invent.kde.org/sdk/kdesvn.git
+      branch: master
+      spec: specs/kdesvn.spec
+      version_script: scripts/versions/kdesvn.sh
+      extra_sources: extra/kdesvn-zh_CN.po
+      force: ${{ inputs.force || false }}

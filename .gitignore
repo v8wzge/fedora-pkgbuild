@@ -1,0 +1,8 @@
+# Local build artefacts
+/.rpmbuild/
+/work/
+*.rpm
+
+# Python cache
+__pycache__/
+*.pyc
