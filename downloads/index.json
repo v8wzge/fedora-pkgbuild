@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-11-21T17:00:51.169206+00:00",
+  "generated_at": "2026-11-21T17:03:44.227867+00:00",
   "description": "Official Linux RPM download addresses. Clients fetch these URLs directly from the vendor.",
   "packages": [
     {
@@ -13,15 +13,17 @@
         {
           "arch": "x86_64",
           "format": "rpm",
-          "url": "https://qqdl.gtimg.cn/qqfile/QQNTV2/9.9.36/release/9ee04bef/QQ_3.2.34_260924_x86_64_01.rpm"
+          "url": "https://qqdl.gtimg.cn/qqfile/QQNTV2/9.9.36/release/9ee04bef/QQ_3.2.34_260924_x86_64_01.rpm",
+          "sign": "qq-urlsign"
         },
         {
           "arch": "aarch64",
           "format": "rpm",
-          "url": "https://qqdl.gtimg.cn/qqfile/QQNTV2/9.9.36/release/9ee04bef/QQ_3.2.34_260924_aarch64_01.rpm"
+          "url": "https://qqdl.gtimg.cn/qqfile/QQNTV2/9.9.36/release/9ee04bef/QQ_3.2.34_260924_aarch64_01.rpm",
+          "sign": "qq-urlsign"
         }
       ],
-      "updated": "2026-11-21T17:00:48.974502+00:00",
+      "updated": "2026-11-21T17:03:41.001636+00:00",
       "status": "ok"
     },
     {
@@ -34,15 +36,17 @@
         {
           "arch": "x86_64",
           "format": "rpm",
-          "url": "https://dldir1v6.qq.com/weixin/Universal/Linux/WeChatLinux_x86_64.rpm"
+          "url": "https://dldir1v6.qq.com/weixin/Universal/Linux/WeChatLinux_x86_64.rpm",
+          "sign": "none"
         },
         {
           "arch": "aarch64",
           "format": "rpm",
-          "url": "https://dldir1v6.qq.com/weixin/Universal/Linux/WeChatLinux_arm64.rpm"
+          "url": "https://dldir1v6.qq.com/weixin/Universal/Linux/WeChatLinux_arm64.rpm",
+          "sign": "none"
         }
       ],
-      "updated": "2026-11-21T17:00:49.824631+00:00",
+      "updated": "2026-11-21T17:03:42.527467+00:00",
       "status": "ok"
     },
     {
@@ -55,10 +59,12 @@
         {
           "arch": "x86_64",
           "format": "rpm",
-          "url": "https://wps-linux-personal.wpscdn.cn/wps/download/ep/Linux2023/29183/wps-office-12.1.2.29183.AK.preread.sw.Personal-1-806792.x86_64.rpm"
+          "url": "https://wps-linux-personal.wpscdn.cn/wps/download/ep/Linux2023/29183/wps-office-12.1.2.29183.AK.preread.sw.Personal-1-806792.x86_64.rpm",
+          "sign": "wps-md5-path-ts",
+          "sign_key": "7f8faaaa468174dc1c9cd62e5f218a5b"
         }
       ],
-      "updated": "2026-11-21T17:00:51.156743+00:00",
+      "updated": "2026-11-21T17:03:44.218547+00:00",
       "status": "ok"
     }
   ]
