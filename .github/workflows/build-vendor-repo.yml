@@ -99,7 +99,7 @@ jobs:
         working-directory: source
         run: |
           set -euo pipefail
-          python3 - "$FEDORA_VERSION" <<'PY' > ../rpmrepo/state/vendor.json
+          python3 - "$FEDORA_VERSION" <<'PY' > ../work/vendor-state.json
           import datetime, json, os, sys
           print(json.dumps({
               "fingerprint": os.environ["FINGERPRINT"],
@@ -117,4 +117,4 @@ jobs:
         working-directory: source
         run: |
           set -euo pipefail
-          bash scripts/vendor-repo/publish-vendor.sh ../rpmrepo ../rpmrepo/state/vendor.json
+          bash scripts/vendor-repo/publish-vendor.sh ../rpmrepo ../work/vendor-state.json

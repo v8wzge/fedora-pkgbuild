@@ -51,7 +51,7 @@ dnf --repoid=v8wzge-vendor list --available
 
 - 大文件（RPM）托管在 Release，仅 repodata（几百 KB）进 gh-pages，git 仓库不会膨胀。
 - 资源文件名固定为 `<包>-<版本>-<架构>.rpm`，因此下载 URL 稳定；厂商发新版时旧资源会被删除，Release 只保留当前版本。
-- 架构由厂商提供：微信 x86_64/aarch64，QQ x86_64/aarch64，WPS x86_64。dnf 会自动按本机架构选择。
+- **只镜像 x86_64**：多架构会让每次下载量翻倍（每包 300–600 MB），容易触发厂商 CDN 的限流或封禁。如需其他架构，可在 `fetch_rpms.py` / `decide.py` 后追加架构参数（如 `aarch64`）显式开启。
 - 这些包不是本仓库编译的，是**厂商官方二进制的镜像**，仅供加速与统一管理，版权归各厂商所有。
 - `dnf` 依赖解析仍会按 RPM 内部的 NEVRA 进行；若厂商 RPM 声明了本机缺失的依赖，请按 dnf 提示安装对应系统库。
 

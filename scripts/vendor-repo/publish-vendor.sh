@@ -2,17 +2,20 @@
 # Publish the vendor repodata + state into the gh-pages branch.
 #
 # Usage:
-#   publish-vendor.sh REPO_DIR STATE_FILE
+#   publish-vendor.sh REPO_DIR [STATE_FILE]
 #
-# Shares the `rpm-build` concurrency group with every other publisher, and
-# guards against a concurrent push the same way scripts/publish-repo.sh does.
+# STATE_FILE is optional and only copied when it differs from the in-repo
+# destination. The workflow normally writes state directly into
+# REPO_DIR/state/vendor.json, so no copy is needed there.
 set -Eeuo pipefail
 
 REPO=$1
-STATE=$2
+STATE=${2:-}
 
 mkdir -p "$REPO/state"
-cp -f "$STATE" "$REPO/state/vendor.json"
+if [[ -n "$STATE" && "$STATE" != "$REPO/state/vendor.json" ]]; then
+    cp -f "$STATE" "$REPO/state/vendor.json"
+fi
 
 git -C "$REPO" add -A vendor state/vendor.json
 if git -C "$REPO" diff --cached --quiet; then

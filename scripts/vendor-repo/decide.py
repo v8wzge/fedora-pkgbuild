@@ -2,18 +2,11 @@
 """Compare probed versions with the last published state.
 
 Usage:
-    decide.py INDEX_FILE STATE_FILE
+    decide.py INDEX_FILE STATE_FILE [ARCH ...]
 
-Prints tab-separated key=value lines for GITHUB_OUTPUT:
-    changed=true|false
-    fingerprint=<sha256 over (package, status, version, artifact URLs)>
-
-The fingerprint is computed from the probe result alone -- BEFORE any large
-download. Vendor URLs embed build identifiers (QQ's release hash, WPS's build
-number), so a repackaged build at the same advertised version still changes
-the URL and is detected. Only WeChat uses a fixed URL, where a same-version
-repack cannot be distinguished from the version string; use a forced
-workflow_dispatch run for that case.
+Default architecture set is x86_64 only, matching fetch_rpms.py. The
+fingerprint must cover exactly the artifacts the build would download,
+otherwise an aarch64-only change would trigger a pointless rebuild.
 """
 import hashlib
 import json
@@ -23,13 +16,14 @@ import sys
 
 index = json.loads(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8"))
 state_file = pathlib.Path(sys.argv[2])
+wanted_arches = set(sys.argv[3:]) if len(sys.argv) > 3 else {"x86_64"}
 
 pairs = []
 for item in index.get("packages", []):
     urls = sorted(
         artifact.get("url", "")
         for artifact in item.get("packages", [])
-        if artifact.get("format") == "rpm"
+        if artifact.get("format") == "rpm" and artifact.get("arch") in wanted_arches
     )
     pairs.append([
         item.get("package", "?"),

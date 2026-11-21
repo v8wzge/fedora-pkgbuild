@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
-"""Download every official RPM referenced by the download index.
+"""Download the official x86_64 RPM referenced by the download index.
 
 Usage:
-    fetch_rpms.py INDEX_FILE STAGING_DIR
+    fetch_rpms.py INDEX_FILE STAGING_DIR [ARCH ...]
 
-Signing happens HERE at build time, not on the client. Each artifact is
-stored in STAGING_DIR under a stable filename::
+Only x86_64 is mirrored by default: pulling every architecture multiplies the
+download volume (300-600 MB each) and raises the risk of vendor rate-limiting
+or IP bans. Pass extra architectures explicitly if you ever need them.
+
+Signing happens HERE at build time, not on the client. The RPM is stored in
+STAGING_DIR under a stable filename::
 
     <package>-<version>-<arch>.rpm
 
@@ -73,6 +77,8 @@ def download(url, destination):
 def main():
     index_file = pathlib.Path(sys.argv[1])
     staging = pathlib.Path(sys.argv[2])
+    # Default to x86_64 only; extra architectures require an explicit opt-in.
+    wanted_arches = set(sys.argv[3:]) if len(sys.argv) > 3 else {"x86_64"}
     staging.mkdir(parents=True, exist_ok=True)
 
     index = json.loads(index_file.read_text(encoding="utf-8"))
@@ -86,9 +92,12 @@ def main():
         for artifact in item.get("packages", []):
             if artifact.get("format") != "rpm":
                 continue
+            arch = artifact["arch"]
+            if arch not in wanted_arches:
+                print(f"Skipping {item['package']}/{arch} (not in requested arches: {','.join(sorted(wanted_arches))})")
+                continue
             package = item["package"]
             version = item["version"]
-            arch = artifact["arch"]
             filename = f"{safe_component(package)}-{safe_component(version)}-{safe_component(arch)}.rpm"
             target = staging / filename
             try:
