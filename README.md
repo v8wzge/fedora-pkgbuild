@@ -35,6 +35,28 @@ curl -fsSL https://raw.githubusercontent.com/v8wzge/fedora-pkgbuild/main/scripts
 
 新增软件只需在 `scripts/download-index/probes/` 添加一个探测器脚本，输出统一的 JSON（格式见 `probes/common.py`），聚合脚本会自动纳入；某个探测器失败只影响该软件，不影响其他条目。
 
+### 用 dnf 直接安装（推荐）
+
+同一套探测器还驱动一个**真正的 dnf 源**。工作流 `build-vendor-repo.yml` 每 3 天在**构建端**完成实时签名并下载官方 RPM，把它们镜像到本仓库的 `vendor-rpms` GitHub Release，然后生成 repodata——其中每个包的 `location href` 是指向该 Release 资源的绝对 URL。dnf 读取元数据后跟着这个 URL 重定向到 Release 下载，并按 SHA256 校验。**客户端不需要任何签名逻辑，也不用把 300–600 MB 的安装包塞进 git 分支。**
+
+这样国产软件和自编译包一样，可以直接用包管理器安装、升级、卸载：
+
+```bash
+sudo curl -o /etc/yum.repos.d/v8wzge-vendor.repo \
+  https://raw.githubusercontent.com/v8wzge/fedora-pkgbuild/main/repo/v8wzge-vendor.repo
+sudo dnf install wechat qq wps-office
+# 查看源里有哪些版本
+dnf --repoid=v8wzge-vendor list --available
+```
+
+- 大文件（RPM）托管在 Release，仅 repodata（几百 KB）进 gh-pages，git 仓库不会膨胀。
+- 资源文件名固定为 `<包>-<版本>-<架构>.rpm`，因此下载 URL 稳定；厂商发新版时旧资源会被删除，Release 只保留当前版本。
+- 架构由厂商提供：微信 x86_64/aarch64，QQ x86_64/aarch64，WPS x86_64。dnf 会自动按本机架构选择。
+- 这些包不是本仓库编译的，是**厂商官方二进制的镜像**，仅供加速与统一管理，版权归各厂商所有。
+- `dnf` 依赖解析仍会按 RPM 内部的 NEVRA 进行；若厂商 RPM 声明了本机缺失的依赖，请按 dnf 提示安装对应系统库。
+
+原来的 `install-from-index.sh` 仍保留作客户端直连方案，但有了 dnf 源后一般不再需要。
+
 ## 仓库结构
 
 ```
@@ -45,8 +67,10 @@ curl -fsSL https://raw.githubusercontent.com/v8wzge/fedora-pkgbuild/main/scripts
   build-klassy.yml
   build-maple-font.yml
   update-download-index.yml  # 国产软件官方下载地址索引（每 3 天）
+  build-vendor-repo.yml      # 国产软件官方 RPM 镜像 dnf 源（每 3 天）
 scripts/                 # 通用构建/发布脚本
   download-index/        # 国产软件官方下载地址索引（探测器/聚合/客户端）
+  vendor-repo/           # 构建时签名下载 + Release 镜像 + repodata 重定向
 specs/                   # 符合 Fedora 打包规范的 spec 文件
 extra/                   # 额外 Source 文件（如 kdesvn 中文翻译）
 repo/v8wzge-fedora.repo  # 供用户安装的 dnf 源定义

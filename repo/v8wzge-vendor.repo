@@ -1,0 +1,11 @@
+[v8wzge-vendor]
+name=v8wzge vendor apps (WeChat / QQ / WPS)
+# repodata lives in the vendor/ subdirectory; the RPMs themselves are hosted
+# as GitHub Release assets and reached via absolute location hrefs in the
+# metadata. gpgcheck=0 because vendor binaries are not signed by this repo,
+# but every download is still verified against the SHA256 in the repodata.
+baseurl=https://v8wzge.github.io/fedora-pkgbuild/vendor/
+enabled=1
+gpgcheck=0
+repo_gpgcheck=0
+metadata_expire=6h
