@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-11-21T17:00:51.169206+00:00",
+  "description": "Official Linux RPM download addresses. Clients fetch these URLs directly from the vendor.",
+  "packages": [
+    {
+      "package": "qq",
+      "name": "QQ Linux 版",
+      "version": "3.2.34",
+      "homepage": "https://im.qq.com/linux",
+      "source": "https://qq-web.cdn-go.cn/im.qq.com_new/latest/rainbow/pcConfig.json",
+      "packages": [
+        {
+          "arch": "x86_64",
+          "format": "rpm",
+          "url": "https://qqdl.gtimg.cn/qqfile/QQNTV2/9.9.36/release/9ee04bef/QQ_3.2.34_260924_x86_64_01.rpm"
+        },
+        {
+          "arch": "aarch64",
+          "format": "rpm",
+          "url": "https://qqdl.gtimg.cn/qqfile/QQNTV2/9.9.36/release/9ee04bef/QQ_3.2.34_260924_aarch64_01.rpm"
+        }
+      ],
+      "updated": "2026-11-21T17:00:48.974502+00:00",
+      "status": "ok"
+    },
+    {
+      "package": "wechat",
+      "name": "微信 Linux 版",
+      "version": "4.1.13",
+      "homepage": "https://linux.weixin.qq.com/",
+      "source": "https://linux.weixin.qq.com/",
+      "packages": [
+        {
+          "arch": "x86_64",
+          "format": "rpm",
+          "url": "https://dldir1v6.qq.com/weixin/Universal/Linux/WeChatLinux_x86_64.rpm"
+        },
+        {
+          "arch": "aarch64",
+          "format": "rpm",
+          "url": "https://dldir1v6.qq.com/weixin/Universal/Linux/WeChatLinux_arm64.rpm"
+        }
+      ],
+      "updated": "2026-11-21T17:00:49.824631+00:00",
+      "status": "ok"
+    },
+    {
+      "package": "wps-office",
+      "name": "WPS Office Linux 版",
+      "version": "12.1.2.29183",
+      "homepage": "https://linux.wps.cn/",
+      "source": "https://linux.wps.cn/",
+      "packages": [
+        {
+          "arch": "x86_64",
+          "format": "rpm",
+          "url": "https://wps-linux-personal.wpscdn.cn/wps/download/ep/Linux2023/29183/wps-office-12.1.2.29183.AK.preread.sw.Personal-1-806792.x86_64.rpm"
+        }
+      ],
+      "updated": "2026-11-21T17:00:51.156743+00:00",
+      "status": "ok"
+    }
+  ]
+}
