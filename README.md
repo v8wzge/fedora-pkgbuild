@@ -74,5 +74,7 @@ sudo dnf install kdesvn klassy maple-font
 ## 说明
 
 - 构建环境固定为 Fedora 45 容器，与本机开发环境一致。
+- 三个包共享同一个 `gh-pages` 分支；工作流通过 `rpm-build` 并发组串行发布，避免推送冲突。若仍有并行写入，`scripts/publish-repo.sh` 会先 rebase 再推送。
+- RPM 仓库地址：<https://v8wzge.github.io/fedora-pkgbuild/>
 - Maple Mono 采用 SIL OFL 1.1；`v8.0-beta.3` 等测试版会被正常打包，RPM 版本中的 `-` 会转换为 `~` 以保证版本比较正确。
 - kdesvn 使用本仓库维护的完整简体中文翻译作为 `Source1`，替换上游未完成的 `po/zh_CN/kdesvn.po`。
