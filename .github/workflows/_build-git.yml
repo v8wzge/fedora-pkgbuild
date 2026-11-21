@@ -33,6 +33,11 @@ on:
         required: false
         type: boolean
         default: false
+      fedora_version:
+        description: Fedora release used as the build container (e.g. 45, 46, 47)
+        required: false
+        type: string
+        default: "45"
 
 permissions:
   contents: write
@@ -46,7 +51,7 @@ jobs:
     name: Build ${{ inputs.package }}
     runs-on: ubuntu-latest
     container:
-      image: fedora:45
+      image: fedora:${{ inputs.fedora_version }}
       options: --user root
     steps:
       - name: Install build tools
@@ -72,6 +77,7 @@ jobs:
           GIT_URL: ${{ inputs.git_url }}
           BRANCH: ${{ inputs.branch }}
           FORCE: ${{ inputs.force }}
+          FEDORA: ${{ inputs.fedora_version }}
         run: |
           set -euo pipefail
           COMMIT=$(git ls-remote "$GIT_URL" "refs/heads/$BRANCH" | awk 'NR==1 {print $1}')
@@ -81,15 +87,17 @@ jobs:
           fi
           STATE="../rpmrepo/state/$PKG.json"
           LAST=""
+          LAST_FEDORA="45"
           if [[ -f "$STATE" ]]; then
             LAST=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("commit",""))' "$STATE")
+            LAST_FEDORA=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("fedora","45"))' "$STATE")
           fi
           echo "commit=$COMMIT" >> "$GITHUB_OUTPUT"
-          if [[ "$FORCE" == "true" || "$COMMIT" != "$LAST" ]]; then
-            echo "Upstream changed ($LAST -> $COMMIT), building"
+          if [[ "$FORCE" == "true" || "$COMMIT" != "$LAST" || "$FEDORA" != "$LAST_FEDORA" ]]; then
+            echo "Upstream changed ($LAST -> $COMMIT) or build system changed (fc$LAST_FEDORA -> fc$FEDORA); building"
             echo "built=true" >> "$GITHUB_OUTPUT"
           else
-            echo "No new upstream commit for $PKG; skipping"
+            echo "No new upstream commit for $PKG and build system unchanged (fc$FEDORA); skipping"
             echo "built=false" >> "$GITHUB_OUTPUT"
           fi
 
@@ -143,6 +151,7 @@ jobs:
           PKG: ${{ inputs.package }}
           COMMIT: ${{ steps.decide.outputs.commit }}
           BRANCH: ${{ inputs.branch }}
+          FEDORA: ${{ inputs.fedora_version }}
         run: |
           set -euo pipefail
           python3 - <<'PY' > ../work/state.json
@@ -150,6 +159,7 @@ jobs:
           print(json.dumps({
               "commit": os.environ["COMMIT"],
               "branch": os.environ["BRANCH"],
+              "fedora": os.environ["FEDORA"],
               "built_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
           }, indent=2))
           PY

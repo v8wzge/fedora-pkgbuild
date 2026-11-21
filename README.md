@@ -1,6 +1,6 @@
 # fedora-pkgbuild
 
-面向 Fedora 45 的自动化 RPM 打包流水线。当前维护：
+面向 Fedora 的自动化 RPM 打包流水线（默认容器为 Fedora 45）。当前维护：
 
 | 软件包 | 上游 | 跟踪目标 |
 | --- | --- | --- |
@@ -71,9 +71,20 @@ sudo dnf install kdesvn klassy maple-font
 
 仓库中的 RPM 未签名，因此 `.repo` 使用 `gpgcheck=0`。如需签名，可在 `scripts/publish-repo.sh` 前增加 `rpmsign` 步骤并把 `.repo` 改为 `gpgcheck=1` + `gpgkey=`。
 
+## 如何升级到 Fedora 46 / 47
+
+构建系统版本通过 GitHub 仓库变量控制，**不需要改代码**：
+
+1. 仓库 Settings → Secrets and variables → Actions → **Variables** → New repository variable
+2. 名称填写 `FEDORA_VERSION`，值填写 `46` 或 `47`
+3. 删除该变量即可回到默认的 `45`
+
+切换后下一次定时检查会把 `state` 里记录的构建系统版本与当前值比较，发现不同就重新构建全部包，生成 `.fc46` / `.fc47` 的新 RPM 并发布到同一个仓库。旧版本的 RPM 会保留，方便跨版本共存。spec 中的 `%{?dist}` 会自动变成对应版本的 dist tag。
+
 ## 说明
 
-- 构建环境固定为 Fedora 45 容器，与本机开发环境一致。
+- 构建环境默认为 Fedora 45 容器；可用 `FEDORA_VERSION` 变量切换为 46/47。
+- **kdesvn 与 Fedora 官方包的区分**：官方提供 `0:2.1.0-18.fc45`，本仓库提供的是 master 分支快照。为避免 dnf 因 release 号（`18` > `0.1`）而选中官方包，本仓库的 kdesvn 使用 `Epoch: 1`，因此快照包永远优先。可用 `rpm -q --qf '%{EPOCH}:%{VERSION}-%{RELEASE}\n' kdesvn` 查看，`1:` 开头即为本仓库快照，`0:` 开头为官方包。klassy 与 maple-font 在 Fedora 官方仓库中不存在，无此问题。
 - 三个包共享同一个 `gh-pages` 分支；工作流通过 `rpm-build` 并发组串行发布，避免推送冲突。若仍有并行写入，`scripts/publish-repo.sh` 会先 rebase 再推送。
 - RPM 仓库地址：<https://v8wzge.github.io/fedora-pkgbuild/>
 - Maple Mono 采用 SIL OFL 1.1；`v8.0-beta.3` 等测试版会被正常打包，RPM 版本中的 `-` 会转换为 `~` 以保证版本比较正确。

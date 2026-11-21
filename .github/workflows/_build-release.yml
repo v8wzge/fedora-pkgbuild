@@ -29,6 +29,11 @@ on:
         required: false
         type: boolean
         default: false
+      fedora_version:
+        description: Fedora release used as the build container (e.g. 45, 46, 47)
+        required: false
+        type: string
+        default: "45"
 
 permissions:
   contents: write
@@ -42,7 +47,7 @@ jobs:
     name: Build ${{ inputs.package }}
     runs-on: ubuntu-latest
     container:
-      image: fedora:45
+      image: fedora:${{ inputs.fedora_version }}
       options: --user root
     steps:
       - name: Install build tools
@@ -70,6 +75,7 @@ jobs:
           ASSET_NAME: ${{ inputs.asset_name }}
           INCLUDE_PRE: ${{ inputs.include_prereleases }}
           FORCE: ${{ inputs.force }}
+          FEDORA: ${{ inputs.fedora_version }}
         run: |
           set -euo pipefail
           IFS=$'\t' read -r TAG VERSION URL ASSET_ID UPDATED < <(
@@ -77,8 +83,10 @@ jobs:
           )
           STATE="../rpmrepo/state/$PKG.json"
           LAST=""
+          LAST_FEDORA="45"
           if [[ -f "$STATE" ]]; then
             LAST=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("fingerprint",""))' "$STATE")
+            LAST_FEDORA=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("fedora","45"))' "$STATE")
           fi
           FINGERPRINT="$TAG:$ASSET_ID:$UPDATED"
           {
@@ -87,11 +95,11 @@ jobs:
             echo "url=$URL"
             echo "fingerprint=$FINGERPRINT"
           } >> "$GITHUB_OUTPUT"
-          if [[ "$FORCE" == "true" || "$FINGERPRINT" != "$LAST" ]]; then
-            echo "New release $TAG ($ASSET_ID), building"
+          if [[ "$FORCE" == "true" || "$FINGERPRINT" != "$LAST" || "$FEDORA" != "$LAST_FEDORA" ]]; then
+            echo "New release $TAG ($ASSET_ID) or build system changed (fc$LAST_FEDORA -> fc$FEDORA); building"
             echo "built=true" >> "$GITHUB_OUTPUT"
           else
-            echo "Release $TAG already packaged; skipping"
+            echo "Release $TAG already packaged on fc$FEDORA; skipping"
             echo "built=false" >> "$GITHUB_OUTPUT"
           fi
 
@@ -133,6 +141,7 @@ jobs:
           PKG: ${{ inputs.package }}
           TAG: ${{ steps.decide.outputs.tag }}
           FINGERPRINT: ${{ steps.decide.outputs.fingerprint }}
+          FEDORA: ${{ inputs.fedora_version }}
         run: |
           set -euo pipefail
           python3 - <<'PY' > ../work/state.json
@@ -140,6 +149,7 @@ jobs:
           print(json.dumps({
               "tag": os.environ["TAG"],
               "fingerprint": os.environ["FINGERPRINT"],
+              "fedora": os.environ["FEDORA"],
               "built_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
           }, indent=2))
           PY

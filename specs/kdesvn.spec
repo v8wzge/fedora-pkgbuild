@@ -4,6 +4,8 @@
 %global shortcommit %(c=%{commit}; echo ${c:0:7})
 
 Name:           kdesvn
+# Epoch 1 keeps this master-branch snapshot higher than Fedora's 2.1.0-18.fc45.
+Epoch:          1
 Version:        2.1.0
 Release:        0.1.%{commitdate}git%{shortcommit}%{?dist}
 Summary:        KDE Subversion client

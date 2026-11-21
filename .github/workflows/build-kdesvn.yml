@@ -29,4 +29,5 @@ jobs:
       spec: specs/kdesvn.spec
       version_script: scripts/versions/kdesvn.sh
       extra_sources: extra/kdesvn-zh_CN.po
+      fedora_version: ${{ vars.FEDORA_VERSION || '45' }}
       force: ${{ inputs.force || false }}

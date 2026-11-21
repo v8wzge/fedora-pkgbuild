@@ -28,4 +28,5 @@ jobs:
       branch: 6.8temp
       spec: specs/klassy.spec
       version_script: scripts/versions/klassy.sh
+      fedora_version: ${{ vars.FEDORA_VERSION || '45' }}
       force: ${{ inputs.force || false }}

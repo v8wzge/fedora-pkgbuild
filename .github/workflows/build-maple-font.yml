@@ -28,4 +28,5 @@ jobs:
       asset_name: MapleMono-NF-unhinted.zip
       spec: specs/maple-font.spec
       include_prereleases: true
+      fedora_version: ${{ vars.FEDORA_VERSION || '45' }}
       force: ${{ inputs.force || false }}
