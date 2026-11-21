@@ -10,6 +10,31 @@
 
 每 3 天检查一次上游。git 包比较分支 HEAD commit，release 包比较 tag + asset id + 更新时间；有变化才重新构建，否则跳过。构建产物（二进制 RPM 与 SRPM）发布到 `gh-pages` 分支上的 dnf 仓库。
 
+## 国产软件官方下载地址索引
+
+对微信、QQ、WPS 这类**只从官方渠道分发、不适合二次打包**的软件，本仓库另外维护一份"官方下载地址索引"。工作流每 3 天探测各厂商官方页面/配置，把最新版本与官方 RPM 直链写入索引并发布到 `https://v8wzge.github.io/fedora-pkgbuild/downloads/index.json`。**索引只记录地址，RPM 本身由客户机直接从厂商 CDN 拉取**，本仓库不托管这些安装包。
+
+客户端脚本位于 `scripts/download-index/install-from-index.sh`：
+
+```bash
+# 查看索引中的软件与版本
+curl -fsSL https://raw.githubusercontent.com/v8wzge/fedora-pkgbuild/main/scripts/download-index/install-from-index.sh | bash -s -- --list
+
+# 下载并从官方源安装（会自动匹配本机架构）
+curl -fsSL https://raw.githubusercontent.com/v8wzge/fedora-pkgbuild/main/scripts/download-index/install-from-index.sh | bash -s -- wechat
+# 也支持指定架构：... bash -s -- qq aarch64
+```
+
+当前索引的软件：
+
+| 包 ID | 软件 | 版本来源 |
+| --- | --- | --- |
+| `wechat` | 微信 Linux 版 | `linux.weixin.qq.com` 页面 |
+| `qq` | QQ Linux 版 | `im.qq.com` 的 `pcConfig.json` |
+| `wps-office` | WPS Office Linux 版 | `linux.wps.cn` 下载页 |
+
+新增软件只需在 `scripts/download-index/probes/` 添加一个探测器脚本，输出统一的 JSON（格式见 `probes/common.py`），聚合脚本会自动纳入；某个探测器失败只影响该软件，不影响其他条目。
+
 ## 仓库结构
 
 ```
@@ -19,7 +44,9 @@
   build-kdesvn.yml       # 各软件包只保留一份薄配置
   build-klassy.yml
   build-maple-font.yml
+  update-download-index.yml  # 国产软件官方下载地址索引（每 3 天）
 scripts/                 # 通用构建/发布脚本
+  download-index/        # 国产软件官方下载地址索引（探测器/聚合/客户端）
 specs/                   # 符合 Fedora 打包规范的 spec 文件
 extra/                   # 额外 Source 文件（如 kdesvn 中文翻译）
 repo/v8wzge-fedora.repo  # 供用户安装的 dnf 源定义
