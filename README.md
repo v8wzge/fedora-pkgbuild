@@ -79,7 +79,7 @@ repo/v8wzge-fedora.repo       # 供用户安装的 dnf 源定义
 
 ```bash
 sudo curl -o /etc/yum.repos.d/v8wzge-fedora.repo \
-  https://raw.githubusercontent.com/v8wzge/fedora-pkgbuild/main/repo/v8wzge-fedora.repo
+  https://v8wzge.github.io/fedora-pkgbuild/v8wzge-fedora.repo
 sudo dnf install kdesvn klassy maple-font \
   rime-wanxiang-ibus-base rime-wanxiang-ibus-dicts \
   fcitx5-mellow-themes clash-verge-rev

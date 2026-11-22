@@ -73,6 +73,12 @@ cp -a "$WORK/allrpms/repodata" "$REPO/repodata"
 
 cp -f "$STATE_FILE" "$REPO/state/$PACKAGE.json"
 
+# Keep the installable .repo file on the Pages site so clients never need to
+# reach raw.githubusercontent.com (which is unreliable in some networks).
+if [[ -f "$HERE/../repo/v8wzge-fedora.repo" ]]; then
+    cp -f "$HERE/../repo/v8wzge-fedora.repo" "$REPO/v8wzge-fedora.repo"
+fi
+
 # Old-style in-repo RPM directories are obsolete; remove them if present.
 for dir in x86_64 noarch SRPMS; do
     if [[ -d "$REPO/$dir" ]]; then
