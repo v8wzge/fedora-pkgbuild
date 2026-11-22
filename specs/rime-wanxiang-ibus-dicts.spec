@@ -3,46 +3,38 @@
 Name:           rime-wanxiang-ibus-dicts
 Version:        18.2.0
 Release:        1%{?dist}
-Summary:        Wanxiang Rime dictionary tables for IBus
+Summary:        Wanxiang octagram language model for IBus Rime
 License:        CC-BY-4.0
-URL:            https://github.com/amzxyz/rime-wanxiang
-Source0:        base-dicts.zip
-Source1:        rime-wanxiang-LICENSE
-Source2:        wanxiang-lts-zh-hans.gram
+URL:            https://github.com/amzxyz/RIME-LMDG
+Source0:        wanxiang-lts-zh-hans.gram
+Source1:        RIME-LMDG-LICENSE
 
 BuildArch:      noarch
-BuildRequires:  unzip
 Requires:       librime-octagram
-Conflicts:      rime-wanxiang-fcitx5-dicts
 
 %description
-Dictionary and grammar model tables for the Wanxiang Pinyin Rime schema on
-IBus Rime. These are the Base dictionaries published on the upstream nightly
-dictionary release and are consumed by rime-wanxiang-ibus-base.
+The Wanxiang LTS Simplified Chinese octagram language model
+(wanxiang-lts-zh-hans.gram), published by the amzxyz/RIME-LMDG project. It is
+loaded from the rime-data root by `grammar: language:` in the Wanxiang schemas.
+Install alongside rime-wanxiang-ibus-base.
 
 %prep
-rm -rf wanxiang-dicts
-mkdir wanxiang-dicts
-unzip -q %{SOURCE0} -d wanxiang-dicts
+# Upstream ships a pre-built language model; nothing to prepare.
 
 %build
-# Upstream ships pre-built dictionary data.
+# Upstream ships a pre-built language model; nothing to build.
 
 %install
 rm -rf %{buildroot}
-install -d %{buildroot}%{rime_data}/dicts
-cp -a wanxiang-dicts/. %{buildroot}%{rime_data}/dicts/
-# Octagram language model referenced by `grammar: language:` in the schemas.
-install -pm644 %{SOURCE2} %{buildroot}%{rime_data}/wanxiang-lts-zh-hans.gram
+install -d %{buildroot}%{rime_data}
+install -pm644 %{SOURCE0} %{buildroot}%{rime_data}/wanxiang-lts-zh-hans.gram
 install -d %{buildroot}%{_licensedir}/%{name}
 install -pm644 %{SOURCE1} %{buildroot}%{_licensedir}/%{name}/LICENSE
 
 %files
 %license %{_licensedir}/%{name}/LICENSE
-%{rime_data}/dicts/
-%{rime_data}/dicts/*
 %{rime_data}/wanxiang-lts-zh-hans.gram
 
 %changelog
 * Sun Nov 22 2026 v8wzge <v8wzge@users.noreply.github.com> - 18.2.0-1
-- Automated build from the upstream Base dictionary release
+- Automated build from the upstream LTS grammar model release

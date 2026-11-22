@@ -3,7 +3,7 @@
 Name:           rime-wanxiang-fcitx5-base
 Version:        18.2.0
 Release:        1%{?dist}
-Summary:        Wanxiang Rime schemas and Lua extensions for Fcitx5
+Summary:        Wanxiang Rime schemas and dictionaries for Fcitx5
 License:        CC-BY-4.0
 URL:            https://github.com/amzxyz/rime-wanxiang
 Source0:        rime-wanxiang-base.zip
@@ -19,9 +19,9 @@ Conflicts:      rime-wanxiang-ibus-base
 Conflicts:      rime-wanxiang-ibus-dicts
 
 %description
-Wanxiang Pinyin standard (Base) Rime schemas, Lua extensions and OpenCC data
-for Fcitx5 Rime. Requires the companion rime-wanxiang-fcitx5-dicts package,
-which provides the dictionary tables referenced by the schemas.
+Wanxiang Pinyin standard (Base) Rime schemas, Lua extensions, OpenCC data and
+dictionary tables for Fcitx5 Rime. The companion rime-wanxiang-fcitx5-dicts
+package provides the octagram grammar model referenced by the schemas.
 
 %prep
 rm -rf wanxiang-base
@@ -35,8 +35,6 @@ unzip -q %{SOURCE0} -d wanxiang-base
 rm -rf %{buildroot}
 install -d %{buildroot}%{rime_data}
 cp -a wanxiang-base/. %{buildroot}%{rime_data}/
-# Dictionary tables come from the companion -dicts package.
-rm -rf %{buildroot}%{rime_data}/dicts
 install -d %{buildroot}%{_licensedir}/%{name}
 install -pm644 %{SOURCE1} %{buildroot}%{_licensedir}/%{name}/LICENSE
 
