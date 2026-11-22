@@ -95,9 +95,13 @@ def main():
     for path in rpms:
         name = path.name
         if name in current:
-            urls[name] = current[name]["browser_download_url"]
-            print(f"Asset {name} already current")
-            continue
+            # The filename encodes the upstream version, but a rebuild of the
+            # same version can still change content (e.g. an updated grammar
+            # model). Always replace so the Release never serves stale bytes.
+            print(f"Replacing existing asset {name}")
+            api("DELETE",
+                f"/repos/{owner}/{repo_name}/releases/assets/{current[name]['id']}",
+                token)
         print(f"Uploading {name} ({path.stat().st_size / 1024 / 1024:.1f} MiB) ...",
               flush=True)
         with open(path, "rb") as handle:
