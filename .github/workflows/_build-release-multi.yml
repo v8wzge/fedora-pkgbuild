@@ -1,0 +1,207 @@
+name: Reusable - multi-asset release RPM
+
+on:
+  workflow_call:
+    inputs:
+      package:
+        description: Package name (used as the state key)
+        required: true
+        type: string
+      release_repo:
+        description: GitHub repository that publishes the primary release asset
+        required: true
+        type: string
+      asset_name:
+        description: Exact primary release asset filename
+        required: true
+        type: string
+      spec_files:
+        description: Space-separated spec files, each producing one binary package
+        required: true
+        type: string
+      extra_release_repo:
+        description: Repository for the secondary asset (defaults to release_repo)
+        required: false
+        type: string
+        default: ""
+      extra_asset_name:
+        description: Secondary release asset filename (e.g. a dictionary bundle)
+        required: false
+        type: string
+        default: ""
+      extra_sources:
+        description: Space-separated extra Source files to stage (e.g. license files)
+        required: false
+        type: string
+        default: ""
+      extra_include_prereleases:
+        description: Consider prereleases when resolving the secondary asset
+        required: false
+        type: boolean
+        default: false
+      include_prereleases:
+        description: Consider beta / rc releases as well
+        required: false
+        type: boolean
+        default: false
+      force:
+        description: Rebuild even when the release is unchanged
+        required: false
+        type: boolean
+        default: false
+      fedora_version:
+        description: Fedora release used as the build container
+        required: false
+        type: string
+        default: "45"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rpm-${{ inputs.package }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build ${{ inputs.package }}
+    runs-on: ubuntu-latest
+    container:
+      image: fedora:${{ inputs.fedora_version }}
+      options: --user root
+    steps:
+      - name: Install build tools
+        run: dnf -y install git python3 rpm-build rpmdevtools createrepo_c curl unzip
+
+      - name: Checkout packaging repository
+        uses: actions/checkout@v4
+        with:
+          path: source
+
+      - name: Checkout RPM repository branch
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: rpmrepo
+          token: ${{ github.token }}
+
+      - name: Compare newest release with last build
+        id: decide
+        working-directory: source
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          RELEASE_REPO: ${{ inputs.release_repo }}
+          ASSET_NAME: ${{ inputs.asset_name }}
+          EXTRA_REPO: ${{ inputs.extra_release_repo }}
+          EXTRA_ASSET: ${{ inputs.extra_asset_name }}
+          EXTRA_INCLUDE_PRE: ${{ inputs.extra_include_prereleases }}
+          FORCE: ${{ inputs.force }}
+          FEDORA: ${{ inputs.fedora_version }}
+          PKG: ${{ inputs.package }}
+        run: |
+          set -euo pipefail
+          IFS=$'\t' read -r TAG VERSION URL ASSET_ID UPDATED < <(
+            python3 scripts/find_release.py "$RELEASE_REPO" "$ASSET_NAME" "$INCLUDE_PRE"
+          )
+          FP="$TAG:$ASSET_ID:$UPDATED"
+          if [[ -n "$EXTRA_ASSET" ]]; then
+            EXTRA_SOURCE=${EXTRA_REPO:-$RELEASE_REPO}
+            IFS=$'\t' read -r ETAG EVERSION EURL EASSET_ID EUPDATED < <(
+              python3 scripts/find_release.py \
+                "$EXTRA_SOURCE" "$EXTRA_ASSET" "$EXTRA_INCLUDE_PRE"
+            )
+            FP="$FP|$ETAG:$EASSET_ID:$EUPDATED"
+            echo "extra_repo=$EXTRA_SOURCE" >> "$GITHUB_OUTPUT"
+            echo "extra_asset=$EXTRA_ASSET" >> "$GITHUB_OUTPUT"
+          fi
+          STATE="../rpmrepo/state/$PKG.json"
+          LAST=""; LAST_FEDORA="45"
+          if [[ -f "$STATE" ]]; then
+            LAST=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("fingerprint",""))' "$STATE")
+            LAST_FEDORA=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("fedora","45"))' "$STATE")
+          fi
+          {
+            echo "tag=$TAG"
+            echo "version=$VERSION"
+            echo "fingerprint=$FP"
+          } >> "$GITHUB_OUTPUT"
+          if [[ "$FORCE" == "true" || "$FP" != "$LAST" || "$FEDORA" != "$LAST_FEDORA" ]]; then
+            echo "New assets $FP or build system changed; building"
+            echo "built=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Assets unchanged on fc$FEDORA; skipping"
+            echo "built=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download release assets
+        if: steps.decide.outputs.built == 'true'
+        working-directory: source
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          RELEASE_REPO: ${{ inputs.release_repo }}
+          ASSET_NAME: ${{ inputs.asset_name }}
+          EXTRA_REPO: ${{ steps.decide.outputs.extra_repo }}
+          EXTRA_ASSET: ${{ steps.decide.outputs.extra_asset }}
+          EXTRA_SOURCES: ${{ inputs.extra_sources }}
+          INCLUDE_PRE: ${{ inputs.include_prereleases }}
+          EXTRA_INCLUDE_PRE: ${{ inputs.extra_include_prereleases }}
+        run: |
+          set -euo pipefail
+          mkdir -p ../work/sources ../work/spec ../work/out
+          bash scripts/prepare-release-source.sh \
+            "$RELEASE_REPO" "$ASSET_NAME" "$ASSET_NAME" ../work/sources "$INCLUDE_PRE"
+          if [[ -n "${EXTRA_ASSET:-}" ]]; then
+            bash scripts/prepare-release-source.sh \
+              "${EXTRA_REPO:-$RELEASE_REPO}" "$EXTRA_ASSET" "$EXTRA_ASSET" \
+              ../work/sources "${EXTRA_INCLUDE_PRE:-true}"
+          fi
+          for extra in $EXTRA_SOURCES; do
+            cp -a "$extra" ../work/sources/
+          done
+          ls -lh ../work/sources
+
+      - name: Render specs and build RPMs
+        if: steps.decide.outputs.built == 'true'
+        working-directory: source
+        env:
+          SPECS: ${{ inputs.spec_files }}
+          VERSION: ${{ steps.decide.outputs.version }}
+        run: |
+          set -euo pipefail
+          for spec in $SPECS; do
+            out="../work/spec/$(basename "$spec")"
+            python3 scripts/render_spec.py --spec "$spec" --out "$out" --version "$VERSION"
+            bash scripts/build-rpm.sh "$out" ../work/sources ../work/out
+          done
+          ls -lh ../work/out
+
+      - name: Publish to RPM repository
+        if: steps.decide.outputs.built == 'true'
+        working-directory: source
+        env:
+          PKG: ${{ inputs.package }}
+          TAG: ${{ steps.decide.outputs.tag }}
+          FINGERPRINT: ${{ steps.decide.outputs.fingerprint }}
+          FEDORA: ${{ inputs.fedora_version }}
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' > ../work/state.json
+          import datetime, json, os
+          print(json.dumps({
+              "tag": os.environ["TAG"],
+              "fingerprint": os.environ["FINGERPRINT"],
+              "fedora": os.environ["FEDORA"],
+              "built_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+          }, indent=2))
+          PY
+          bash scripts/publish-release-repo.sh ../rpmrepo ../work/out "$PKG" ../work/state.json
+
+      - name: Upload RPM artifacts
+        if: steps.decide.outputs.built == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: rpm-${{ inputs.package }}
+          path: work/out/*.rpm
+          if-no-files-found: error

@@ -1,0 +1,149 @@
+name: Reusable - mirror upstream RPM release
+
+on:
+  workflow_call:
+    inputs:
+      package:
+        description: Package name (used as the state key)
+        required: true
+        type: string
+      release_repo:
+        description: Upstream GitHub repository publishing ready-made RPMs
+        required: true
+        type: string
+      asset_prefix:
+        description: Filename prefix of the RPM asset, e.g. Clash.Verge-
+        required: true
+        type: string
+      asset_arch:
+        description: Architecture suffix of the RPM filename, e.g. x86_64
+        required: true
+        type: string
+      include_prereleases:
+        description: Consider prereleases as well
+        required: false
+        type: boolean
+        default: false
+      force:
+        description: Republish even when the upstream release is unchanged
+        required: false
+        type: boolean
+        default: false
+      fedora_version:
+        description: Fedora release used as the build container
+        required: false
+        type: string
+        default: "45"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: rpm-${{ inputs.package }}
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    name: Mirror ${{ inputs.package }}
+    runs-on: ubuntu-latest
+    container:
+      image: fedora:${{ inputs.fedora_version }}
+      options: --user root
+    steps:
+      - name: Install tooling
+        run: dnf -y install git python3 createrepo_c curl
+
+      - name: Checkout packaging repository
+        uses: actions/checkout@v4
+        with:
+          path: source
+
+      - name: Checkout RPM repository branch
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: rpmrepo
+          token: ${{ github.token }}
+
+      - name: Compare newest upstream release with last build
+        id: decide
+        working-directory: source
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          RELEASE_REPO: ${{ inputs.release_repo }}
+          ASSET_PREFIX: ${{ inputs.asset_prefix }}
+          ASSET_ARCH: ${{ inputs.asset_arch }}
+          INCLUDE_PRE: ${{ inputs.include_prereleases }}
+          FORCE: ${{ inputs.force }}
+          FEDORA: ${{ inputs.fedora_version }}
+          PKG: ${{ inputs.package }}
+        run: |
+          set -euo pipefail
+          IFS=$'\t' read -r TAG VERSION URL ASSET_ID UPDATED FILENAME < <(
+            python3 scripts/find_release_asset.py \
+              "$RELEASE_REPO" "$ASSET_PREFIX" "-1.$ASSET_ARCH.rpm" "$INCLUDE_PRE"
+          )
+          FP="$TAG:$ASSET_ID:$UPDATED"
+          STATE="../rpmrepo/state/$PKG.json"
+          LAST=""; LAST_FEDORA="45"
+          if [[ -f "$STATE" ]]; then
+            LAST=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("fingerprint",""))' "$STATE")
+            LAST_FEDORA=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1])).get("fedora","45"))' "$STATE")
+          fi
+          {
+            echo "tag=$TAG"
+            echo "version=$VERSION"
+            echo "url=$URL"
+            echo "filename=$FILENAME"
+            echo "fingerprint=$FP"
+          } >> "$GITHUB_OUTPUT"
+          if [[ "$FORCE" == "true" || "$FP" != "$LAST" || "$FEDORA" != "$LAST_FEDORA" ]]; then
+            echo "New upstream RPM $FILENAME ($TAG); mirroring"
+            echo "built=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Upstream RPM unchanged on fc$FEDORA; skipping"
+            echo "built=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Download upstream RPM
+        if: steps.decide.outputs.built == 'true'
+        working-directory: source
+        env:
+          URL: ${{ steps.decide.outputs.url }}
+          FILENAME: ${{ steps.decide.outputs.filename }}
+        run: |
+          set -euo pipefail
+          mkdir -p ../work/out
+          curl --fail --location --silent --show-error "$URL" -o "../work/out/$FILENAME"
+          ls -lh ../work/out
+
+      - name: Publish to RPM repository
+        if: steps.decide.outputs.built == 'true'
+        working-directory: source
+        env:
+          PKG: ${{ inputs.package }}
+          TAG: ${{ steps.decide.outputs.tag }}
+          FINGERPRINT: ${{ steps.decide.outputs.fingerprint }}
+          FEDORA: ${{ inputs.fedora_version }}
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY' > ../work/state.json
+          import datetime, json, os
+          print(json.dumps({
+              "tag": os.environ["TAG"],
+              "fingerprint": os.environ["FINGERPRINT"],
+              "fedora": os.environ["FEDORA"],
+              "built_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+          }, indent=2))
+          PY
+          bash scripts/publish-release-repo.sh ../rpmrepo ../work/out "$PKG" ../work/state.json
+
+      - name: Upload RPM artifact
+        if: steps.decide.outputs.built == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: rpm-${{ inputs.package }}
+          path: work/out/*.rpm
+          if-no-files-found: error

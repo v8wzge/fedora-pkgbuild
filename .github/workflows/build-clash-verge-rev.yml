@@ -1,0 +1,30 @@
+name: Mirror Clash Verge Rev RPM
+
+on:
+  schedule:
+    - cron: "37 3 */3 * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Republish even if the upstream release is unchanged
+        type: boolean
+        default: false
+
+concurrency:
+  group: rpm-build
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  mirror:
+    uses: ./.github/workflows/_mirror-release-rpm.yml
+    with:
+      package: clash-verge-rev
+      release_repo: clash-verge-rev/clash-verge-rev
+      asset_prefix: Clash.Verge-
+      asset_arch: x86_64
+      include_prereleases: false
+      fedora_version: ${{ vars.FEDORA_VERSION || '45' }}
+      force: ${{ inputs.force || false }}

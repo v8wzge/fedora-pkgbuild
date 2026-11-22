@@ -1,0 +1,35 @@
+name: Build Wanxiang Rime schemas (Fcitx5)
+
+on:
+  schedule:
+    - cron: "17 3 */3 * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Rebuild even if the upstream assets are unchanged
+        type: boolean
+        default: false
+
+concurrency:
+  group: rpm-build
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    uses: ./.github/workflows/_build-release-multi.yml
+    with:
+      package: rime-wanxiang-fcitx5
+      release_repo: amzxyz/rime-wanxiang
+      asset_name: rime-wanxiang-base.zip
+      extra_asset_name: base-dicts.zip
+      extra_include_prereleases: true
+      spec_files: >-
+        specs/rime-wanxiang-fcitx5-base.spec
+        specs/rime-wanxiang-fcitx5-dicts.spec
+      extra_sources: extra/rime-wanxiang-LICENSE
+      include_prereleases: false
+      fedora_version: ${{ vars.FEDORA_VERSION || '45' }}
+      force: ${{ inputs.force || false }}

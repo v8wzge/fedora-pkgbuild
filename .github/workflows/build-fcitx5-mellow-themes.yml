@@ -1,0 +1,31 @@
+name: Build fcitx5-mellow-themes RPM
+
+on:
+  schedule:
+    - cron: "27 3 */3 * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: Rebuild even if the upstream commit is unchanged
+        type: boolean
+        default: false
+
+concurrency:
+  group: rpm-build
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    uses: ./.github/workflows/_build-git.yml
+    with:
+      package: fcitx5-mellow-themes
+      git_url: https://github.com/sanweiya/fcitx5-mellow-themes.git
+      branch: main
+      spec: specs/fcitx5-mellow-themes.spec
+      version_script: scripts/versions/fcitx5-mellow-themes.sh
+      extra_sources: extra/fcitx5-mellow-themes-LICENSE
+      fedora_version: ${{ vars.FEDORA_VERSION || '45' }}
+      force: ${{ inputs.force || false }}

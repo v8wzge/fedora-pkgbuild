@@ -142,6 +142,8 @@ jobs:
           TAG: ${{ steps.decide.outputs.tag }}
           FINGERPRINT: ${{ steps.decide.outputs.fingerprint }}
           FEDORA: ${{ inputs.fedora_version }}
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
           set -euo pipefail
           python3 - <<'PY' > ../work/state.json
@@ -153,7 +155,7 @@ jobs:
               "built_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
           }, indent=2))
           PY
-          bash scripts/publish-repo.sh ../rpmrepo ../work/out "$PKG" ../work/state.json
+          bash scripts/publish-release-repo.sh ../rpmrepo ../work/out "$PKG" ../work/state.json
 
       - name: Upload RPM artifacts
         if: steps.decide.outputs.built == 'true'
