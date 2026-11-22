@@ -26,6 +26,9 @@ jobs:
       asset_name: rime-wanxiang-base.zip
       extra_asset_name: base-dicts.zip
       extra_include_prereleases: true
+      third_release_repo: amzxyz/RIME-LMDG
+      third_asset_name: wanxiang-lts-zh-hans.gram
+      third_include_prereleases: false
       spec_files: >-
         specs/rime-wanxiang-ibus-base.spec
         specs/rime-wanxiang-ibus-dicts.spec

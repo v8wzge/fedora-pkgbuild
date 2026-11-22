@@ -8,6 +8,7 @@ License:        CC-BY-4.0
 URL:            https://github.com/amzxyz/rime-wanxiang
 Source0:        base-dicts.zip
 Source1:        rime-wanxiang-LICENSE
+Source2:        wanxiang-lts-zh-hans.gram
 
 BuildArch:      noarch
 BuildRequires:  unzip
@@ -31,6 +32,8 @@ unzip -q %{SOURCE0} -d wanxiang-dicts
 rm -rf %{buildroot}
 install -d %{buildroot}%{rime_data}/dicts
 cp -a wanxiang-dicts/. %{buildroot}%{rime_data}/dicts/
+# Octagram language model referenced by `grammar: language:` in the schemas.
+install -pm644 %{SOURCE2} %{buildroot}%{rime_data}/wanxiang-lts-zh-hans.gram
 install -d %{buildroot}%{_licensedir}/%{name}
 install -pm644 %{SOURCE1} %{buildroot}%{_licensedir}/%{name}/LICENSE
 
@@ -38,6 +41,7 @@ install -pm644 %{SOURCE1} %{buildroot}%{_licensedir}/%{name}/LICENSE
 %license %{_licensedir}/%{name}/LICENSE
 %{rime_data}/dicts/
 %{rime_data}/dicts/*
+%{rime_data}/wanxiang-lts-zh-hans.gram
 
 %changelog
 * Sun Nov 22 2026 v8wzge <v8wzge@users.noreply.github.com> - 18.2.0-1

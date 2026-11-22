@@ -105,7 +105,7 @@ sudo dnf install kdesvn klassy maple-font \
 - **kdesvn 与 Fedora 官方包的区分**：官方提供 `0:2.1.0-18.fc45`，本仓库提供的是 master 分支快照。为避免 dnf 因 release 号（`18` > `0.1`）而选中官方包，本仓库的 kdesvn 使用 `Epoch: 1`，因此快照包永远优先。可用 `rpm -q --qf '%{EPOCH}:%{VERSION}-%{RELEASE}\n' kdesvn` 查看，`1:` 开头即为本仓库快照，`0:` 开头为官方包。klassy 与 maple-font 在 Fedora 官方仓库中不存在，无此问题。
 - 所有包共享同一个 `gh-pages` 分支；工作流通过 `rpm-build` 并发组串行发布，避免推送冲突。若仍有并行写入，`scripts/publish-release-repo.sh` 会先 rebase 再推送。
 - RPM 仓库地址：<https://v8wzge.github.io/fedora-pkgbuild/>；RPM 二进制统一托管在 Release `packages`。
-- 万象拼音的 Base 包提供 schema/Lua/OpenCC 数据，词典包提供 `dicts/` 下的词库与语法模型；Base 包会依赖同变体的词典包。`librime-lua`、`librime-octagram` 均为 Fedora `librime` 的子包，已写入依赖。IBus 变体依赖 `ibus-rime`，Fcitx5 变体依赖 `fcitx5-rime`，两套包名互斥。
+- 万象拼音的 Base 包提供 schema/Lua/OpenCC 数据；词典包提供 `dicts/` 下的词库表以及 `wanxiang-lts-zh-hans.gram`（来自 `amzxyz/RIME-LMDG` 的 LTS release，约 373 MB），librime-octagram 会按 schema 中的 `grammar: language:` 自动加载。两个变体各有一套 base + 词典包，base 依赖同变体的词典包。`librime-lua`、`librime-octagram` 均为 Fedora `librime` 的子包，已写入依赖。IBus 变体依赖 `ibus-rime`，Fcitx5 变体依赖 `fcitx5-rime`，两套包名互斥。
 - `fcitx5-mellow-themes` 上游没有 tag/release，按 `main` 分支快照打包，版本取提交日期。
 - `clash-verge-rev` 不重新编译，直接镜像上游发布的 x86_64 RPM，版权归上游所有。
 - Maple Mono 采用 SIL OFL 1.1；`v8.0-beta.3` 等测试版会被正常打包，RPM 版本中的 `-` 会转换为 `~` 以保证版本比较正确。
