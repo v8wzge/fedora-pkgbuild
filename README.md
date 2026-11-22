@@ -7,8 +7,6 @@
 | `kdesvn` | `invent.kde.org/sdk/kdesvn` | `master` 分支（Qt6/KF6） |
 | `klassy` | `paulmcauley/klassy` | `6.8temp` 分支（Plasma 6.8 开发分支，Qt6） |
 | `maple-font` | `subframe7536/maple-font` | 最新 release（**包含测试版**）的 `MapleMono-NF-unhinted.zip` |
-| `rime-wanxiang-ibus` | `amzxyz/rime-wanxiang` | 标准版 Base + 基础词典，适配 IBus Rime |
-| `rime-wanxiang-fcitx5` | `amzxyz/rime-wanxiang` | 标准版 Base + 基础词典，适配 Fcitx5 Rime |
 | `fcitx5-mellow-themes` | `sanweiya/fcitx5-mellow-themes` | `main` 分支快照（圆角主题） |
 | `clash-verge-rev` | `clash-verge-rev/clash-verge-rev` | 最新 release 的官方 x86_64 RPM（直接镜像） |
 
@@ -25,8 +23,6 @@
   build-kdesvn.yml            # 各软件包只保留一份薄配置
   build-klassy.yml
   build-maple-font.yml
-  build-rime-wanxiang-ibus.yml
-  build-rime-wanxiang-fcitx5.yml
   build-fcitx5-mellow-themes.yml
   build-clash-verge-rev.yml
 scripts/                      # 通用构建/发布脚本
@@ -81,11 +77,8 @@ repo/v8wzge-fedora.repo       # 供用户安装的 dnf 源定义
 sudo curl -o /etc/yum.repos.d/v8wzge-fedora.repo \
   https://v8wzge.github.io/fedora-pkgbuild/v8wzge-fedora.repo
 sudo dnf install kdesvn klassy maple-font \
-  rime-wanxiang-ibus-base rime-wanxiang-ibus-dicts \
   fcitx5-mellow-themes clash-verge-rev
 ```
-
-万象拼音还有一个 Fcitx5 变体：`rime-wanxiang-fcitx5-base` + `rime-wanxiang-fcitx5-dicts`。IBus 和 Fcitx5 两套包互斥，只装其中一套。
 
 仓库中的 RPM 未签名，因此 `.repo` 使用 `gpgcheck=0`。dnf 从 `gh-pages` 读取 repodata，再按其中的地址从 GitHub Release 下载 RPM。
 
@@ -105,7 +98,6 @@ sudo dnf install kdesvn klassy maple-font \
 - **kdesvn 与 Fedora 官方包的区分**：官方提供 `0:2.1.0-18.fc45`，本仓库提供的是 master 分支快照。为避免 dnf 因 release 号（`18` > `0.1`）而选中官方包，本仓库的 kdesvn 使用 `Epoch: 1`，因此快照包永远优先。可用 `rpm -q --qf '%{EPOCH}:%{VERSION}-%{RELEASE}\n' kdesvn` 查看，`1:` 开头即为本仓库快照，`0:` 开头为官方包。klassy 与 maple-font 在 Fedora 官方仓库中不存在，无此问题。
 - 所有包共享同一个 `gh-pages` 分支；工作流通过 `rpm-build` 并发组串行发布，避免推送冲突。若仍有并行写入，`scripts/publish-release-repo.sh` 会先 rebase 再推送。
 - RPM 仓库地址：<https://v8wzge.github.io/fedora-pkgbuild/>；RPM 二进制统一托管在 Release `packages`。
-- 万象拼音按上游的两个 Release 资产打成两个包：`*-base` 直接安装官方 `rime-wanxiang-base.zip`（schema/Lua/OpenCC 数据 + `dicts/` 下的词库表，随 Base 一起更新）；`*-dicts` 安装 `amzxyz/RIME-LMDG` LTS release 的 `wanxiang-lts-zh-hans.gram`（约 373 MB），librime-octagram 会按 schema 中的 `grammar: language:` 自动加载。两个变体各有一套 base + 模型包，base 依赖同变体的模型包。`librime-lua`、`librime-octagram` 均为 Fedora `librime` 的子包，已写入依赖。IBus 变体依赖 `ibus-rime`，Fcitx5 变体依赖 `fcitx5-rime`，两套包名互斥。
 - `fcitx5-mellow-themes` 上游没有 tag/release，按 `main` 分支快照打包，版本取提交日期。
 - `clash-verge-rev` 不重新编译，直接镜像上游发布的 x86_64 RPM，版权归上游所有。
 - Maple Mono 采用 SIL OFL 1.1；`v8.0-beta.3` 等测试版会被正常打包，RPM 版本中的 `-` 会转换为 `~` 以保证版本比较正确。
