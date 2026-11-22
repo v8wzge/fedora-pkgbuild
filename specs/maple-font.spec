@@ -1,7 +1,7 @@
 %global fontname maple-mono-nf-unhinted
 
 Name:           maple-font
-Version:        8.0~beta.3
+Version:        8.0.beta.3
 Release:        1%{?dist}
 Summary:        Maple Mono Nerd Font, unhinted
 License:        OFL-1.1
