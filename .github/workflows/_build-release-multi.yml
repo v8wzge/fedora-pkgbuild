@@ -94,6 +94,7 @@ jobs:
           ASSET_NAME: ${{ inputs.asset_name }}
           EXTRA_REPO: ${{ inputs.extra_release_repo }}
           EXTRA_ASSET: ${{ inputs.extra_asset_name }}
+          INCLUDE_PRE: ${{ inputs.include_prereleases }}
           EXTRA_INCLUDE_PRE: ${{ inputs.extra_include_prereleases }}
           FORCE: ${{ inputs.force }}
           FEDORA: ${{ inputs.fedora_version }}
