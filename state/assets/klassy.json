@@ -1,0 +1,6 @@
+{
+  "klassy-6.7.4-0.1.20261114git23fe4cd.fc45.src.rpm": "https://github.com/v8wzge/fedora-pkgbuild/releases/download/packages/klassy-6.7.4-0.1.20261114git23fe4cd.fc45.src.rpm",
+  "klassy-6.7.4-0.1.20261114git23fe4cd.fc45.x86_64.rpm": "https://github.com/v8wzge/fedora-pkgbuild/releases/download/packages/klassy-6.7.4-0.1.20261114git23fe4cd.fc45.x86_64.rpm",
+  "klassy-debuginfo-6.7.4-0.1.20261114git23fe4cd.fc45.x86_64.rpm": "https://github.com/v8wzge/fedora-pkgbuild/releases/download/packages/klassy-debuginfo-6.7.4-0.1.20261114git23fe4cd.fc45.x86_64.rpm",
+  "klassy-debugsource-6.7.4-0.1.20261114git23fe4cd.fc45.x86_64.rpm": "https://github.com/v8wzge/fedora-pkgbuild/releases/download/packages/klassy-debugsource-6.7.4-0.1.20261114git23fe4cd.fc45.x86_64.rpm"
+}
