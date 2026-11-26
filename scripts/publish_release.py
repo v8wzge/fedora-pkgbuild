@@ -93,7 +93,11 @@ def main():
 
     urls = {}
     for path in rpms:
-        name = path.name
+        # GitHub Release normalizes '~' in asset names to '.', so the
+        # manifest key (and therefore repodata location href) must use
+        # the same sanitized name. Keep '~' in the RPM header Version
+        # for correct prerelease ordering.
+        name = path.name.replace("~", ".")
         if name in current:
             # The filename encodes the upstream version, but a rebuild of the
             # same version can still change content (e.g. an updated grammar
