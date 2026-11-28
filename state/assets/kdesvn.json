@@ -1,6 +1,6 @@
 {
-  "kdesvn-2.1.0-0.1.20261124git9f653f8.fc45.src.rpm": "https://github.com/v8wzge/fedora-pkgbuild/releases/download/packages/kdesvn-2.1.0-0.1.20261124git9f653f8.fc45.src.rpm",
-  "kdesvn-2.1.0-0.1.20261124git9f653f8.fc45.x86_64.rpm": "https://github.com/v8wzge/fedora-pkgbuild/releases/download/packages/kdesvn-2.1.0-0.1.20261124git9f653f8.fc45.x86_64.rpm",
-  "kdesvn-debuginfo-2.1.0-0.1.20261124git9f653f8.fc45.x86_64.rpm": "https://github.com/v8wzge/fedora-pkgbuild/releases/download/packages/kdesvn-debuginfo-2.1.0-0.1.20261124git9f653f8.fc45.x86_64.rpm",
-  "kdesvn-debugsource-2.1.0-0.1.20261124git9f653f8.fc45.x86_64.rpm": "https://github.com/v8wzge/fedora-pkgbuild/releases/download/packages/kdesvn-debugsource-2.1.0-0.1.20261124git9f653f8.fc45.x86_64.rpm"
+  "kdesvn-2.1.0-0.1.20261127git4f112c2.fc45.src.rpm": "https://github.com/v8wzge/fedora-pkgbuild/releases/download/packages/kdesvn-2.1.0-0.1.20261127git4f112c2.fc45.src.rpm",
+  "kdesvn-2.1.0-0.1.20261127git4f112c2.fc45.x86_64.rpm": "https://github.com/v8wzge/fedora-pkgbuild/releases/download/packages/kdesvn-2.1.0-0.1.20261127git4f112c2.fc45.x86_64.rpm",
+  "kdesvn-debuginfo-2.1.0-0.1.20261127git4f112c2.fc45.x86_64.rpm": "https://github.com/v8wzge/fedora-pkgbuild/releases/download/packages/kdesvn-debuginfo-2.1.0-0.1.20261127git4f112c2.fc45.x86_64.rpm",
+  "kdesvn-debugsource-2.1.0-0.1.20261127git4f112c2.fc45.x86_64.rpm": "https://github.com/v8wzge/fedora-pkgbuild/releases/download/packages/kdesvn-debugsource-2.1.0-0.1.20261127git4f112c2.fc45.x86_64.rpm"
 }
